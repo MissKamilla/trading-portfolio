@@ -28,7 +28,8 @@ Single Docker container serving everything on port 8000:
 ```bash
 # Clone and configure
 cp .env.example .env
-# Add your OPENROUTER_API_KEY to .env
+# Optional: add OPENROUTER_API_KEY for real AI chat.
+# Without it, or if the free model is slow/rate-limited, mock responses are used.
 
 # Run with Docker
 docker build -t finally .
@@ -39,11 +40,13 @@ docker run -v finally-data:/app/db -p 8000:8000 --env-file .env finally
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Yes | OpenRouter API key for AI chat |
-| `MASSIVE_API_KEY` | No | Massive (Polygon.io) key for real market data; omit to use simulator |
-| `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
+| Variable             | Required | Description                                                          |
+| -------------------- | -------- | -------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY` | No       | OpenRouter API key for AI chat                                       |
+| `MASSIVE_API_KEY`    | No       | Massive (Polygon.io) key for real market data; omit to use simulator |
+| `LLM_MOCK`           | No       | Set `true` for deterministic mock LLM responses (testing)            |
+
+For local testing, `LLM_MOCK=true` is the recommended default. Real OpenRouter calls are optional and must fall back to deterministic mock responses if the free model times out, rate-limits, or fails.
 
 ## Project Structure
 
