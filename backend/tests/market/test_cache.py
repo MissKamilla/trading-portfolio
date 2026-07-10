@@ -1,5 +1,7 @@
 """Tests for PriceCache."""
 
+from concurrent.futures import ThreadPoolExecutor
+
 from app.market.cache import PriceCache
 
 
@@ -57,6 +59,16 @@ class TestPriceCache:
         all_prices = cache.get_all()
         assert set(all_prices.keys()) == {"AAPL", "GOOGL"}
 
+    def test_get_all_returns_copy(self):
+        """Test that get_all() does not expose internal cache state."""
+        cache = PriceCache()
+        original = cache.update("AAPL", 190.00)
+
+        all_prices = cache.get_all()
+        all_prices.pop("AAPL")
+
+        assert cache.get("AAPL") == original
+
     def test_version_increments(self):
         """Test that version counter increments."""
         cache = PriceCache()
@@ -101,3 +113,21 @@ class TestPriceCache:
         cache = PriceCache()
         update = cache.update("AAPL", 190.12345)
         assert update.price == 190.12
+
+    def test_concurrent_updates_are_thread_safe(self):
+        """Test concurrent writers do not corrupt cache state or version."""
+        cache = PriceCache()
+        tickers = [f"T{i}" for i in range(20)]
+
+        def write_prices(worker_id: int) -> None:
+            for idx, ticker in enumerate(tickers):
+                cache.update(ticker, worker_id * 100 + idx)
+
+        workers = 10
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            list(executor.map(write_prices, range(workers)))
+
+        assert len(cache) == len(tickers)
+        assert cache.version == workers * len(tickers)
+        for ticker in tickers:
+            assert cache.get(ticker) is not None

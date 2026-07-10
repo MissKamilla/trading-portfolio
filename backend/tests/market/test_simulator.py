@@ -1,5 +1,7 @@
 """Tests for GBMSimulator."""
 
+import numpy as np
+
 from app.market.seed_prices import SEED_PRICES
 from app.market.simulator import GBMSimulator
 
@@ -129,3 +131,25 @@ class TestGBMSimulator:
         if '.' in price_str:
             decimal_part = price_str.split('.')[1]
             assert len(decimal_part) <= 2
+
+    def test_full_default_ticker_set_cholesky_succeeds(self):
+        """Test that the complete default ticker set has a valid correlation matrix."""
+        tickers = list(SEED_PRICES)
+        sim = GBMSimulator(tickers=tickers)
+
+        assert sim.get_tickers() == tickers
+        assert sim._cholesky is not None
+        assert sim._cholesky.shape == (len(tickers), len(tickers))
+        assert set(sim.step()) == set(tickers)
+
+    def test_seeded_numpy_rng_makes_paths_reproducible(self):
+        """Test deterministic GBM paths when NumPy's RNG is seeded."""
+        np.random.seed(42)
+        sim1 = GBMSimulator(["AAPL", "GOOGL"])
+        first_path = [sim1.step(), sim1.step()]
+
+        np.random.seed(42)
+        sim2 = GBMSimulator(["AAPL", "GOOGL"])
+        second_path = [sim2.step(), sim2.step()]
+
+        assert second_path == first_path

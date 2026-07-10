@@ -11,7 +11,7 @@ A complete market data subsystem in `backend/app/market/` (8 modules, ~500 lines
 ```
 MarketDataSource (ABC)
 ├── SimulatorDataSource  →  GBM simulator (default, no API key needed)
-└── MassiveDataSource    →  Polygon.io REST poller (when MASSIVE_API_KEY set)
+└── MassiveDataSource    →  Massive REST poller (when MASSIVE_API_KEY set)
         │
         ▼
    PriceCache (thread-safe, in-memory)
@@ -30,7 +30,7 @@ MarketDataSource (ABC)
 | `cache.py` | `PriceCache` — thread-safe price store with version counter for SSE change detection |
 | `seed_prices.py` | Realistic seed prices, per-ticker GBM params (drift/volatility), correlation groups |
 | `simulator.py` | `GBMSimulator` (Geometric Brownian Motion with Cholesky-correlated moves) + `SimulatorDataSource` |
-| `massive_client.py` | `MassiveDataSource` — REST polling client for Polygon.io via the `massive` package |
+| `massive_client.py` | `MassiveDataSource` — REST polling client for Massive via the `massive` package |
 | `factory.py` | `create_market_data_source()` — selects simulator or Massive based on `MASSIVE_API_KEY` env var |
 | `stream.py` | `create_stream_router()` — FastAPI SSE endpoint factory using version-based change detection |
 
@@ -41,6 +41,15 @@ MarketDataSource (ABC)
 - **GBM with correlated moves** — Cholesky decomposition of sector-based correlation matrix; tech stocks correlate at 0.6, finance at 0.5, cross-sector at 0.3
 - **Random shock events** — ~0.1% chance per tick per ticker of a 2-5% move for visual drama
 - **SSE over WebSockets** — simpler, one-way push, universal browser support
+
+## Planning Docs
+
+| File | Role |
+|------|------|
+| `MARKET_DATA_DESIGN.md` | Current implementation-level design adapted to this project |
+| `MARKET_INTERFACE.md` | Unified source/cache/SSE contract |
+| `MARKET_SIMULATOR.md` | GBM simulator math, lifecycle, tests, and limitations |
+| `MASSIVE_API.md` | Massive REST API usage, rate limits, and current integration scope |
 
 ## Test Suite
 
