@@ -1,0 +1,30 @@
+version: "3.8"
+
+# =============================================================================
+# FinAlly — Docker Compose
+# =============================================================================
+# Convenience wrapper for running the FinAlly container.
+# Usage:
+#   docker compose up       # build + start in foreground
+#   docker compose up -d     # build + start in background
+#   docker compose down      # stop + remove container (data persists in volume)
+# =============================================================================
+
+services:
+  finally:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: finally
+    container_name: finally
+    ports:
+      - "8000:8000"
+    volumes:
+      - finally-data:/app/db
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  finally-data:
+    name: finally-data

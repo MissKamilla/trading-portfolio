@@ -28,9 +28,10 @@ def create_stream_router(price_cache: PriceCache) -> APIRouter:
         """SSE endpoint for live price updates.
 
         Streams all tracked ticker prices every ~500ms. The client connects
-        with EventSource and receives events in the format:
+        with EventSource and receives named "price" events in the format:
 
-            data: {"AAPL": {"ticker": "AAPL", "price": 190.50, ...}, ...}
+            event: price
+            data: {"ticker": "AAPL", "price": 190.50, ...}
 
         Includes a retry directive so the browser auto-reconnects on
         disconnection (EventSource built-in behavior).
@@ -77,10 +78,9 @@ async def _generate_events(
                 last_version = current_version
                 prices = price_cache.get_all()
 
-                if prices:
-                    data = {ticker: update.to_dict() for ticker, update in prices.items()}
-                    payload = json.dumps(data)
-                    yield f"data: {payload}\n\n"
+                for update in prices.values():
+                    payload = json.dumps(update.to_dict())
+                    yield f"event: price\ndata: {payload}\n\n"
 
             await asyncio.sleep(interval)
     except asyncio.CancelledError:

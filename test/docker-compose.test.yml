@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  app:
+    build: ..
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_MOCK=true
+      - MASSIVE_API_KEY=
+    volumes:
+      - test-data:/app/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - finally-test
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.50.0-jammy
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - .:/tests
+    working_dir: /tests
+    command: npx playwright test --config=playwright.config.ts
+    environment:
+      - CI=true
+    networks:
+      - finally-test
+
+volumes:
+  test-data:
+
+networks:
+  finally-test:

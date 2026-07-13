@@ -11,6 +11,14 @@ from app.market.cache import PriceCache
 from app.market.stream import _generate_events, create_stream_router
 
 
+def _parse_price_event(event: str) -> dict:
+    """Parse a named SSE price event into its JSON payload."""
+    lines = event.strip().splitlines()
+    assert lines[0] == "event: price"
+    assert lines[1].startswith("data: ")
+    return json.loads(lines[1].removeprefix("data: "))
+
+
 class DummyRequest:
     """Minimal request object for exercising the SSE generator."""
 
@@ -45,13 +53,13 @@ class TestPriceStream:
         await anext(events)
         event = await anext(events)
 
-        assert event.startswith("data: ")
+        assert event.startswith("event: price\n")
         assert event.endswith("\n\n")
 
-        payload = json.loads(event.removeprefix("data: ").strip())
-        assert payload["AAPL"]["ticker"] == "AAPL"
-        assert payload["AAPL"]["price"] == 190.50
-        assert payload["AAPL"]["direction"] == "flat"
+        payload = _parse_price_event(event)
+        assert payload["ticker"] == "AAPL"
+        assert payload["price"] == 190.50
+        assert payload["direction"] == "flat"
 
         await events.aclose()
 
@@ -74,9 +82,9 @@ class TestPriceStream:
         await task
 
         assert second_event != first_event
-        payload = json.loads(second_event.removeprefix("data: ").strip())
-        assert payload["AAPL"]["price"] == 191.00
-        assert payload["AAPL"]["direction"] == "up"
+        payload = _parse_price_event(second_event)
+        assert payload["price"] == 191.00
+        assert payload["direction"] == "up"
 
         await events.aclose()
 

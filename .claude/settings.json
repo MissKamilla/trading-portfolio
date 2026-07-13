@@ -16,5 +16,10 @@
     "context7@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
     "independent-reviewer@kamilla-tools": false
-  }
+  },
+
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "in-process"
 }
